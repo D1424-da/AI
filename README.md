@@ -47,7 +47,14 @@ source .venv/bin/activate  # Linux/macOS
 .venv\Scripts\activate     # Windows
 
 # 依存関係インストール
-pip install tensorflow keras pillow opencv-python scikit-learn matplotlib psutil
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# GPU版（オプション）
+# pip install -r requirements-gpu.txt
+
+# 開発版（オプション）
+# pip install -r requirements-dev.txt
 ```
 
 ### 3. アプリケーション起動
@@ -311,12 +318,19 @@ python check_progress.py
 python -c "import tensorflow as tf; print('TF Version:', tf.__version__)"
 python -c "import PIL; print('PIL Version:', PIL.__version__)"
 
+# インストール確認
+python -c "import sklearn; print('scikit-learn:', sklearn.__version__)"
+
 # メモリ使用量確認
 python -c "import psutil; print(f'Memory: {psutil.virtual_memory().percent}%')"
 
-# GPU メモリ確認
-python -c "import tensorflow as tf; print(tf.config.experimental.get_memory_info('GPU:0'))"
+# GPU 認識確認
+python -c "import tensorflow as tf; print(f'GPU Available: {tf.config.list_physical_devices(\"GPU\")}')"
 ```
+
+### 📥 詳細なインストール手順
+
+詳しいインストール手順は [`INSTALLATION.md`](INSTALLATION.md) をご参照ください。
 
 ## 🔄 更新履歴・パフォーマンス
 

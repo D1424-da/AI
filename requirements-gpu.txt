@@ -1,8 +1,8 @@
-# 杭種分類AIシステム - 依存関係
-# Python 3.8+ 推奨
+# GPU加速版（CUDA対応）
+# 基本依存関係を除外してGPU版TensorFlowのみ追加
 
-# 機械学習・AI
-tensorflow>=2.10.0,<3.0.0
+# 機械学習・AI（GPU版）
+tensorflow-gpu>=2.10.0,<3.0.0
 scikit-learn>=1.0.0
 numpy>=1.21.0
 
