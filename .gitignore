@@ -1,0 +1,15 @@
+﻿.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.h5
+*.pkl
+*.csv
+*.png
+*.log
+.vscode/
+.idea/
+.DS_Store
+models/
+data/
