@@ -14,19 +14,11 @@ import gc
 import psutil
 from datetime import datetime
 from config_loader import ConfigLoader
-import tkinter as tk
-from tkinter import filedialog, messagebox
 
 class MemoryOptimizedPileClassifierTrainer:
     """メモリ最適化版杭種分類モデル訓練クラス"""
     
-    def __init__(self, data_dir=None, model_save_path="models/all_pile_classifier.h5", config_path="config.json"):
-        # データディレクトリが指定されていない場合は選択ダイアログを表示
-        if data_dir is None:
-            data_dir = self.select_training_data_directory()
-            if not data_dir:
-                raise ValueError("訓練データディレクトリが選択されませんでした")
-        
+    def __init__(self, data_dir, model_save_path="models/all_pile_classifier.h5", config_path="config.json"):
         self.data_dir = Path(data_dir)
         self.model_save_path = model_save_path
         
@@ -63,57 +55,6 @@ class MemoryOptimizedPileClassifierTrainer:
         
         # メモリ最適化設定
         self.enable_memory_optimization()
-    
-    def select_training_data_directory(self):
-        """訓練データディレクトリ選択ダイアログ"""
-        root = tk.Tk()
-        root.withdraw()  # メインウィンドウを非表示
-        
-        messagebox.showinfo(
-            "訓練データディレクトリ選択",
-            "訓練データが格納されているディレクトリを選択してください。\n\n"
-            "ディレクトリ構造:\n"
-            "選択ディレクトリ/\n"
-            "  ├── plastic/\n"
-            "  ├── plate/\n"
-            "  ├── byou/\n"
-            "  ├── concrete/\n"
-            "  └── その他のクラスフォルダ..."
-        )
-        
-        data_dir = filedialog.askdirectory(
-            title="訓練データディレクトリを選択",
-            initialdir=os.getcwd()
-        )
-        
-        root.destroy()
-        
-        if data_dir:
-            print(f"✅ 選択された訓練データディレクトリ: {data_dir}")
-            # ディレクトリ構造を確認
-            self.verify_directory_structure(data_dir)
-            return data_dir
-        else:
-            print("❌ ディレクトリが選択されませんでした")
-            return None
-    
-    def verify_directory_structure(self, data_dir):
-        """ディレクトリ構造の確認"""
-        data_path = Path(data_dir)
-        subdirs = [d for d in data_path.iterdir() if d.is_dir()]
-        
-        print(f"\n📁 発見されたサブディレクトリ:")
-        for subdir in subdirs:
-            image_count = len(list(subdir.glob('*.jpg')) + list(subdir.glob('*.jpeg')) + 
-                            list(subdir.glob('*.png')) + list(subdir.glob('*.bmp')))
-            print(f"   {subdir.name}: {image_count}枚")
-        
-        if not subdirs:
-            messagebox.showwarning(
-                "警告", 
-                f"選択されたディレクトリ内にサブディレクトリが見つかりません:\n{data_dir}\n\n"
-                "各クラス名のサブディレクトリが必要です。"
-            )
     
     def enable_memory_optimization(self):
         """TensorFlowメモリ最適化設定"""
@@ -194,6 +135,7 @@ class MemoryOptimizedPileClassifierTrainer:
     def prepare_file_lists_only(self):
         """ファイルパスのみを準備（画像は読み込まない）"""
         print("ファイルリスト準備中...")
+        print(f"📁 データディレクトリ: {self.data_dir}")
         
         image_files = []
         labels = []
@@ -202,18 +144,23 @@ class MemoryOptimizedPileClassifierTrainer:
         for class_name in self.class_names:
             class_dir = self.data_dir / class_name
             if not class_dir.exists():
-                print(f"警告: {class_dir} が見つかりません")
+                print(f"⚠️ 警告: {class_dir} が見つかりません")
                 continue
             
-            # 画像ファイルパスのみ収集
-            extensions = ['*.jpg', '*.jpeg', '*.png', '*.bmp']
-            class_files = []
+            # 画像ファイルパスのみ収集（重複除去）
+            class_files = set()  # 重複排除のためsetを使用
             
-            for ext in extensions:
-                class_files.extend(list(class_dir.glob(ext)))
+            # 各ファイル拡張子を個別にチェック
+            for file_path in class_dir.iterdir():
+                if file_path.is_file():
+                    ext = file_path.suffix.lower()
+                    if ext in ['.jpg', '.jpeg', '.png', '.bmp']:
+                        class_files.add(file_path)
+            
+            class_files = list(class_files)  # リストに戻す
             
             class_counts[class_name] = len(class_files)
-            print(f"{class_name}: {len(class_files)}枚")
+            print(f"   {class_name}: {len(class_files):,}枚")
             
             # ファイルパスとラベルを追加
             image_files.extend(class_files)
@@ -453,25 +400,7 @@ class MemoryOptimizedPileClassifierTrainer:
 
 # 使用例
 if __name__ == "__main__":
-    try:
-        # 訓練データディレクトリを対話的に選択
-        print("=== AI杭種分類モデル訓練 ===")
-        print("訓練データディレクトリを選択してください...")
-        
-        trainer = MemoryOptimizedPileClassifierTrainer()  # data_dirを省略すると選択ダイアログが表示される
-        
-        # 訓練実行
-        success = trainer.train_optimized()
-        
-        if success:
-            print("\n🎉 訓練が正常に完了しました！")
-            print(f"モデル保存先: {trainer.model_save_path}")
-        else:
-            print("\n❌ 訓練中にエラーが発生しました")
-            
-    except Exception as e:
-        print(f"\nエラー: {str(e)}")
-        input("Enterキーを押して終了...")
-    
-    input("\nEnterキーを押して終了...")
+    # データディレクトリを上位階層に設定
+    trainer = MemoryOptimizedPileClassifierTrainer('../training_data')
+    trainer.train_optimized()
     
