@@ -29,18 +29,20 @@ class SimplePileClassifier:
         self.model_save_path = model_save_path
         self.image_size = (64, 64)  # 特徴抽出用の小さなサイズ
         
-        # 杭種クラス定義
+        # 杭種クラス定義（メインプロジェクトと整合）
         self.class_names = [
-            'plastic',      # プラスチック杭
-            'plate',        # プレート
-            'metal',        # 金属杭
-            'concrete',     # コンクリート杭
-            'target',       # 引照点
-            'kokudo',       # 国土基準点
-            'gaiku_kijun',  # 都市再生街区基準点
-            'gaiku_takaku', # 都市再生街区多角点
-            'gaiku_hojo',   # 都市再生街区補助点
-            'gaiku_setsu'   # 都市再生街区節点
+            'plastic',        # プラスチック杭
+            'plate',          # プレート
+            'byou',           # 金属鋲
+            'concrete',       # コンクリート杭
+            'traverse',       # 多角点
+            'kokudo',         # 国土基準点
+            'gaiku_sankaku',  # 街区三角点
+            'gaiku_setsu',    # 街区節点
+            'gaiku_takaku',   # 街区多角点
+            'gaiku_hojo',     # 街区補助点
+            'traverse_in',    # 内部多角点
+            'kagoshima_in'    # 鹿児島内部点
         ]
         
         self.model = None

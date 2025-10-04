@@ -64,13 +64,10 @@ pip install -r requirements.txt
 python pile_classifier_app.py
 ```
 
-#### 🤖 コアクラス分類器（別機能）
+#### 🤖 軽量分類器（scikit-learn版）
 ```bash
-# core_classifierフォルダ内で実行
-cd core_classifier
-python core_classifier_organizer.py
-# またはバッチファイル使用
-start_core_classifier.bat
+# TensorFlow不要の軽量版
+python no_tf_train.py
 ```
 
 #### 📊 モデル訓練
@@ -149,10 +146,10 @@ python train_model_memory_efficient.py
 # - 学習率: 0.001
 ```
 
-#### 📈 訓練中の進捗確認
+#### 📈 訓練監視
 ```bash
 # 別ターミナルで実行
-python check_progress.py
+python training_monitor.py
 ```
 
 ### 🔧 詳細設定
@@ -203,30 +200,20 @@ AI/
 │   ├── pile_classifier_app.py       # GUIメインアプリ
 │   └── start_app.bat                # Windows起動スクリプト
 │
-├── 🔧 独立機能モジュール
-│   └── core_classifier/             # コアクラス分類器（独立機能）
-│       ├── core_classifier_organizer.py # 4クラス vs 12クラス分類
-│       ├── start_core_classifier.bat    # 起動スクリプト
-│       └── README.md                    # 専用使用方法
-│
+
 ├── 🧠 AIモデル・訓練システム
 │   ├── train_model_memory_efficient.py # メモリ最適化訓練
-│   ├── progressive_training_utils.py   # プログレッシブ学習
-│   └── no_tf_train.py                  # 軽量訓練版
+│   └── no_tf_train.py                  # 軽量訓練版（scikit-learn）
 │
 ├── 🛠️ ユーティリティ・ツール
 │   ├── config_loader.py             # 設定ファイル読み込み
 │   ├── verify_data_structure.py     # データ構造検証
-│   ├── check_progress.py            # 学習進捗確認
 │   ├── training_monitor.py          # 学習監視
 │   └── utils.py                     # 共通ユーティリティ
 │
 ├── 📄 設定・ドキュメント
 │   ├── config.json                  # メイン設定ファイル
-│   ├── app_config.txt               # アプリ設定
 │   ├── README.md                    # このファイル（メインドキュメント）
-│   ├── PROJECT_SUMMARY.md           # プロジェクト概要
-│   ├── NEW_FEATURE_REPORT.md        # 新機能レポート
 │   └── INSTALLATION.md              # インストール手順
 │
 ├── 📦 出力・ログ・モデル
@@ -322,8 +309,8 @@ python -c "from verify_data_structure import scan_data_structure; scan_data_stru
 # リアルタイム監視
 python training_monitor.py
 
-# 学習曲線確認
-python check_progress.py
+# 学習監視
+python training_monitor.py
 ```
 
 ### 🔍 デバッグコマンド
