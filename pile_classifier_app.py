@@ -35,18 +35,20 @@ class PileClassifierApp:
         self.root.title("杭種コード自動追加アプリ v1.0")
         self.root.geometry("800x600")
         
-        # 杭種コード定義（エクセルロジック完全準拠）
+        # 杭種コード定義（12クラス統一体系）
         self.pile_codes = {
-            'plastic': 'P',    # プラスチック杭 (Plastic)
-            'plate': 'PL',     # プレート (Plate)
-            'metal': 'B',      # 金属鋲 (Byou)
-            'concrete': 'C',   # コンクリート杭 (Concrete)
-            'target': 'T',     # 引照点 (Target point)
-            'kokudo': 'KD',    # 国土基準点
-            'gaiku_kijun': 'GK',    # 都市再生街区基準点
-            'gaiku_takaku': 'GT',   # 都市再生街区多角点
-            'gaiku_hojo': 'GH',     # 都市再生街区補助点
-            'gaiku_setsu': 'GS'     # 都市再生街区節点
+            'plastic': 'P',         # プラスチック杭
+            'plate': 'PL',          # プレート
+            'byou': 'B',            # 金属鋲
+            'concrete': 'C',        # コンクリート杭
+            'traverse': 'T',        # 多角点
+            'kokudo': 'KD',         # 国土基準点
+            'gaiku_sankaku': 'GS',  # 街区三角点
+            'gaiku_setsu': 'GN',    # 街区節点
+            'gaiku_takaku': 'GT',   # 街区多角点
+            'gaiku_hojo': 'GH',     # 街区補助点
+            'traverse_in': 'TI',    # 内部多角点
+            'kagoshima_in': 'KI'    # 鹿児島内部点
         }
         
         # AIモデル

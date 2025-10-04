@@ -7,25 +7,28 @@
   "pile_codes": {
     "plastic": "P",
     "plate": "PL", 
-    "metal": "B",
+    "byou": "B",
     "concrete": "C",
-    "target": "T",
+    "traverse": "T",
     "kokudo": "KD",
-    "gaiku_kijun": "GK",
+    "gaiku_sankaku": "GS",
+    "gaiku_setsu": "GN",
     "gaiku_takaku": "GT",
     "gaiku_hojo": "GH",
-    "gaiku_setsu": "GS"
+    "traverse_in": "TI",
+    "kagoshima_in": "KI"
   },
   "model_settings": {
-    "model_path": "models/pile_classifier.h5",
+    "model_path": "models/all_pile_classifier.h5",
     "confidence_threshold": 0.7,
     "image_size": [224, 224],
-    "batch_size": 128
+    "input_shape": [224, 224, 3],
+    "batch_size": 32
   },
   "training_settings": {
-    "image_size": [320, 320],
-    "batch_size": 128,
-    "epochs": 30,
+    "image_size": [224, 224],
+    "batch_size": 256,
+    "epochs": 20,
     "learning_rate": 0.001,
     "memory_optimization": true,
     "class_order": [

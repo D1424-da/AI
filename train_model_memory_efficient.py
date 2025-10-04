@@ -14,7 +14,6 @@ import gc
 import psutil
 from datetime import datetime
 from config_loader import ConfigLoader
-import japanize.matplotlib
 
 class MemoryOptimizedPileClassifierTrainer:
     """メモリ最適化版杭種分類モデル訓練クラス"""
