@@ -148,8 +148,8 @@ python train_model_memory_efficient.py
 
 #### 📈 訓練監視
 ```bash
-# 別ターミナルで実行
-python training_monitor.py
+# システムリソース監視（統合済み）
+# train_model_memory_efficient.py内で自動実行
 ```
 
 ### 🔧 詳細設定
@@ -208,7 +208,6 @@ AI/
 ├── 🛠️ ユーティリティ・ツール
 │   ├── config_loader.py             # 設定ファイル読み込み
 │   ├── verify_data_structure.py     # データ構造検証
-│   ├── training_monitor.py          # 学習監視
 │   └── utils.py                     # 共通ユーティリティ
 │
 ├── 📄 設定・ドキュメント
@@ -303,13 +302,12 @@ python verify_data_structure.py
 python -c "from verify_data_structure import scan_data_structure; scan_data_structure()"
 ```
 
-#### 5. 訓練進捗監視
+#### 5. システムリソース確認
 ```bash
-# リアルタイム監視
-python training_monitor.py
+# メモリ使用量確認
+python -c "import psutil; print(f'Memory: {psutil.virtual_memory().percent}%')"
 
-# 学習監視
-python training_monitor.py
+# 訓練中の監視は自動で実行されます
 ```
 
 ### 🔍 デバッグコマンド
