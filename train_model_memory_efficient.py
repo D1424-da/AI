@@ -352,23 +352,36 @@ class MemoryOptimizedPileClassifierTrainer:
     
     def plot_results(self, history):
         """結果可視化"""
+        try:
+            import japanize_matplotlib
+        except ImportError:
+            print("警告: japanize_matplotlibがインストールされていません")
+            print("pip install japanize-matplotlibを実行してください")
+            
         plt.figure(figsize=(12, 4))
         
         plt.subplot(1, 2, 1)
         plt.plot(history.history['accuracy'], label='訓練精度')
         plt.plot(history.history['val_accuracy'], label='検証精度')
         plt.title('精度推移')
+        plt.xlabel('エポック')
+        plt.ylabel('精度')
         plt.legend()
+        plt.grid(True)
         
         plt.subplot(1, 2, 2)
         plt.plot(history.history['loss'], label='訓練損失')
         plt.plot(history.history['val_loss'], label='検証損失')
         plt.title('損失推移')
+        plt.xlabel('エポック')
+        plt.ylabel('精度')
         plt.legend()
+        plt.grid(True)
         
         plt.tight_layout()
-        plt.savefig('training_results.png')
-        plt.show()
+        plt.savefig('training_results.png', dpi=150, bbox_inches='tight')
+        print("グラフ保存: training_results.png")
+        #plt.show() #ヘッドレス環境対策
     
     def save_model_info(self):
         """モデル情報保存（詳細版）"""
