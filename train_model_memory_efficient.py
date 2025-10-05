@@ -188,38 +188,54 @@ class MemoryOptimizedPileClassifierTrainer:
         return image_files, categorical_labels
     
     def create_memory_efficient_model(self):
-        """メモリ効率重視のモデル作成"""
-        print("メモリ効率モデル作成中...")
+        """320x320高解像度対応MobileNetV2モデル"""
+        print("320x320高解像度MobileNetV2モデル作成中...")
         
-        # 軽量なベースモデル使用
+        # MobileNetV2: フル幅で320x320対応
         base_model = keras.applications.MobileNetV2(
             weights='imagenet',
             include_top=False,
             input_shape=(*self.image_size, 3),
-            alpha=0.75  # モデルサイズ削減
+            alpha=1.0  # フル幅（0.75→1.0に変更）
         )
         
-        # 特徴抽出のみ（メモリ節約）
-        base_model.trainable = False
+        # Fine-tuning: 上位30層を訓練可能に
+        base_model.trainable = True
+        for layer in base_model.layers[:-30]:
+            layer.trainable = False
         
-        # シンプルな分類ヘッド
+        # 深い分類ヘッド（224x224版の2倍の容量）
         model = keras.Sequential([
             base_model,
             layers.GlobalAveragePooling2D(),
-            layers.Dropout(0.25),
-            layers.Dense(128, activation='relu'),  # 層を小さく
-            layers.Dropout(0.25),
+            layers.BatchNormalization(),
+            layers.Dropout(0.4),
+            layers.Dense(512, activation='relu', kernel_regularizer=keras.regularizers.l2(0.001)),
+            layers.BatchNormalization(),
+            layers.Dropout(0.4),
+            layers.Dense(256, activation='relu', kernel_regularizer=keras.regularizers.l2(0.001)),
+            layers.BatchNormalization(),
+            layers.Dropout(0.3),
             layers.Dense(len(self.class_names), activation='softmax')
         ])
         
-        # 軽量オプティマイザ（設定ファイルから学習率取得）
         model.compile(
-            optimizer=keras.optimizers.Adam(learning_rate=self.config.learning_rate),
+            optimizer=keras.optimizers.AdamW(
+                learning_rate=self.config.learning_rate,
+                weight_decay=0.0001
+            ),
             loss='categorical_crossentropy',
-            metrics=['accuracy']
+            metrics=['accuracy',]
         )
         
-        print(f"モデルパラメータ数: {model.count_params():,}")
+        print(f"320x320モデル構築完了:")
+        print(f"   入力: {self.image_size} (224x224の2.04倍の解像度)")
+        print(f"   alpha: 1.0 (フル幅)")
+        print(f"   分類ヘッド: 512→256 (224x224版は128のみ)")
+        print(f"   Fine-tuning: 上位30層")
+        print(f"   総パラメータ数: {model.count_params():,}")
+        
+        self.model = model
         return model
     
     def train_with_generator(self, train_files, train_labels, val_files, val_labels):

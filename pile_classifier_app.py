@@ -35,26 +35,12 @@ class PileClassifierApp:
         self.root.title("杭種コード自動追加アプリ v1.0")
         self.root.geometry("800x600")
         
-        # 杭種コード定義（12クラス統一体系）
-        self.pile_codes = {
-            'plastic': 'P',         # プラスチック杭
-            'plate': 'PL',          # プレート
-            'byou': 'B',            # 金属鋲
-            'concrete': 'C',        # コンクリート杭
-            'traverse': 'T',        # 多角点
-            'kokudo': 'KD',         # 国土基準点
-            'gaiku_sankaku': 'GS',  # 街区三角点
-            'gaiku_setsu': 'GN',    # 街区節点
-            'gaiku_takaku': 'GT',   # 街区多角点
-            'gaiku_hojo': 'GH',     # 街区補助点
-            'traverse_in': 'TI',    # 内部多角点
-            'kagoshima_in': 'KI'    # 鹿児島内部点
-        }
+        # model_info.jsonから動的にクラス情報を読み込み
+        self._load_model_info()
         
         # AIモデル
         self.model = None
         self.trained_classifier = None  # 訓練済み分類器
-        self.class_names = list(self.pile_codes.keys())
         
         # 処理統計
         self.stats = {
@@ -66,6 +52,62 @@ class PileClassifierApp:
         
         self.setup_ui()
         self.load_model()
+    
+    def _load_model_info(self):
+        """model_info.jsonからクラス情報を読み込み"""
+        try:
+            model_info_path = Path("models/model_info.json")
+            if model_info_path.exists():
+                with open(model_info_path, 'r', encoding='utf-8') as f:
+                    model_info = json.load(f)
+                    self.class_names = model_info.get('label_encoder_classes', [])
+                    self.model_image_size = tuple(model_info.get('image_size', [224, 224]))
+                    print(f"✅ model_info.jsonから読み込み: {len(self.class_names)}クラス")
+            else:
+                # フォールバック: 訓練スクリプトと一致するクラス定義
+                self.class_names = [
+                    'plastic', 'plate', 'byou', 'concrete',
+                    'traverse', 'kokudo', 'gaiku_sankaku', 'gaiku_setsu',
+                    'gaiku_takaku', 'gaiku_hojo', 'traverse_in', 'kagoshima_in'
+                ]
+                self.model_image_size = (224, 224)
+                print("⚠️ model_info.json未発見、フォールバック定義を使用")
+            
+            # 杭種コードマッピング（訓練時のクラス名と完全一致）
+            self.pile_codes = {
+                'plastic': 'P',        # プラスチック杭
+                'plate': 'PL',         # プレート
+                'byou': 'B',           # 金属鋲（metal → byou に修正）
+                'concrete': 'C',       # コンクリート杭
+                'traverse': 'T',       # 引照点（target → traverse に修正）
+                'kokudo': 'KD',        # 国土基準点
+                'gaiku_sankaku': 'GK', # 都市再生街区基準点（gaiku_kijun → gaiku_sankaku に修正）
+                'gaiku_setsu': 'GS',   # 都市再生街区節点
+                'gaiku_takaku': 'GT',  # 都市再生街区多角点
+                'gaiku_hojo': 'GH',    # 都市再生街区補助点
+                'traverse_in': 'TI',   # 追加
+                'kagoshima_in': 'KI'   # 追加
+            }
+            
+            # クラス名とコードマッピングの整合性チェック
+            missing_codes = [cls for cls in self.class_names if cls not in self.pile_codes]
+            if missing_codes:
+                print(f"⚠️ コード未定義のクラス: {missing_codes}")
+            
+        except Exception as e:
+            print(f"❌ model_info.json読み込みエラー: {str(e)}")
+            # 緊急フォールバック
+            self.class_names = [
+                'plastic', 'plate', 'byou', 'concrete',
+                'traverse', 'kokudo', 'gaiku_sankaku', 'gaiku_setsu',
+                'gaiku_takaku', 'gaiku_hojo', 'traverse_in', 'kagoshima_in'
+            ]
+            self.model_image_size = (224, 224)
+            self.pile_codes = {
+                'plastic': 'P', 'plate': 'PL', 'byou': 'B', 'concrete': 'C',
+                'traverse': 'T', 'kokudo': 'KD', 'gaiku_sankaku': 'GK', 'gaiku_setsu': 'GS',
+                'gaiku_takaku': 'GT', 'gaiku_hojo': 'GH', 'traverse_in': 'TI', 'kagoshima_in': 'KI'
+            }
     
     def setup_ui(self):
         """UIセットアップ"""
@@ -158,31 +200,42 @@ class PileClassifierApp:
     def load_model(self):
         """AIモデルロード"""
         try:
-            # 訓練済みモデルがあるかチェック
-            model_path = "models/simple_classifier.pkl"
-            if os.path.exists(model_path):
-                # SimplePileClassifierをインポートして読み込み
+            # 1. TensorFlow H5モデルを優先して読み込み
+            h5_model_path = "models/all_pile_classifier.h5"
+            if os.path.exists(h5_model_path) and TF_AVAILABLE:
+                try:
+                    self.model = tf.keras.models.load_model(h5_model_path)
+                    self.log_message(f"✅ TensorFlowモデル読み込み成功: {h5_model_path}")
+                    self.log_message(f"   - 入力形状: {self.model.input_shape}")
+                    self.log_message(f"   - 出力クラス数: {self.model.output_shape[-1]}")
+                    return
+                except Exception as e:
+                    self.log_message(f"❌ TensorFlowモデル読み込み失敗: {str(e)}")
+            
+            # 2. Scikit-learn PKLモデルをチェック
+            pkl_model_path = "models/simple_classifier.pkl"
+            if os.path.exists(pkl_model_path):
                 try:
                     from no_tf_train import SimplePileClassifier
                     self.trained_classifier = SimplePileClassifier()
                     if self.trained_classifier.load_model():
-                        self.log_message("訓練済みモデル読み込み成功")
+                        self.log_message("✅ Scikit-learn訓練済みモデル読み込み成功")
                         return
                     else:
-                        self.log_message("訓練済みモデル読み込み失敗、デモモードで実行")
+                        self.log_message("❌ Scikit-learn訓練済みモデル読み込み失敗")
                 except Exception as e:
-                    self.log_message(f"モデル読み込みエラー: {str(e)}")
+                    self.log_message(f"❌ Scikit-learnモデル読み込みエラー: {str(e)}")
             
-            # フォールバック: デモ用モデル
+            # 3. フォールバック: デモ用モデル
             self.trained_classifier = None
             if TF_AVAILABLE:
                 self.model = self.create_demo_model()
-                self.log_message("TensorFlowデモモデル読み込み完了")
+                self.log_message("⚠️ デモモード: TensorFlowデモモデル読み込み完了")
             else:
-                self.log_message("デモモード（ランダム予測）で実行")
+                self.log_message("⚠️ デモモード（ランダム予測）で実行")
                 
         except Exception as e:
-            self.log_message(f"モデル読み込みエラー: {str(e)}")
+            self.log_message(f"❌ モデル読み込みエラー: {str(e)}")
             messagebox.showerror("エラー", f"AIモデルの読み込みに失敗しました:\n{str(e)}")
     
     def create_demo_model(self):
@@ -196,18 +249,39 @@ class PileClassifierApp:
         return model
     
     def preprocess_image(self, image_path):
-        """画像前処理"""
+        """画像前処理（日本語パス対応）"""
         try:
-            # 画像読み込み
-            image = cv2.imread(str(image_path))
-            if image is None:
-                return None
+            # 日本語パス対応: PIL経由で画像読み込み
+            from PIL import Image
             
-            # BGRからRGBに変換
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            try:
+                # PILで日本語パス対応読み込み
+                pil_image = Image.open(str(image_path))
+                # PIL → numpy配列に変換
+                image = np.array(pil_image)
+                
+                # RGBA → RGB変換
+                if len(image.shape) == 3 and image.shape[2] == 4:
+                    image = image[:, :, :3]
+                
+                # グレースケール → RGB変換
+                if len(image.shape) == 2:
+                    image = np.stack([image] * 3, axis=-1)
+                
+                # RGBのまま処理（PILはRGB、モデルもRGB期待）
+                
+            except Exception as pil_error:
+                # PILで失敗した場合、OpenCVで再試行
+                self.log_message(f"⚠️ PIL読み込み失敗、OpenCVで再試行: {image_path.name}")
+                image = cv2.imread(str(image_path))
+                if image is None:
+                    self.log_message(f"❌ 画像読み込み完全失敗: {image_path}")
+                    return None
+                # BGRからRGBに変換
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             
-            # リサイズ
-            image = cv2.resize(image, (224, 224))
+            # リサイズ（動的サイズ使用）
+            image = cv2.resize(image, self.model_image_size)
             
             # 正規化
             image = image.astype(np.float32) / 255.0
@@ -216,21 +290,38 @@ class PileClassifierApp:
             image = np.expand_dims(image, axis=0)
             
             return image
+            
         except Exception as e:
-            self.log_message(f"画像前処理エラー: {str(e)}")
+            self.log_message(f"❌ 画像前処理エラー: {str(e)} - {image_path}")
             return None
     
     def classify_pile(self, image_path):
         """杭種分類"""
         try:
-            # 訓練済みモデルが利用可能かチェック
+            # 1. TensorFlowモデルで予測
+            if hasattr(self, 'model') and self.model is not None:
+                # 画像前処理
+                processed_image = self.preprocess_image(image_path)
+                if processed_image is not None:
+                    # 予測実行
+                    predictions = self.model.predict(processed_image, verbose=0)
+                    predicted_index = np.argmax(predictions[0])
+                    confidence = float(predictions[0][predicted_index])
+                    
+                    # インデックスをクラス名に変換
+                    if predicted_index < len(self.class_names):
+                        predicted_class = self.class_names[predicted_index]
+                        return predicted_class, confidence
+                    else:
+                        self.log_message(f"⚠️ 予測インデックス範囲外: {predicted_index}/{len(self.class_names)}")
+            
+            # 2. Scikit-learn訓練済みモデルで予測
             if hasattr(self, 'trained_classifier') and self.trained_classifier is not None:
-                # 実際の訓練済みモデルで予測
                 predicted_class, confidence = self.trained_classifier.predict(image_path)
                 if predicted_class is not None:
                     return predicted_class, confidence
             
-            # フォールバック: デモ用のランダム予測
+            # 3. フォールバック: デモ用のランダム予測
             import random
             predicted_class = random.choice(self.class_names)
             confidence = random.uniform(0.7, 0.95)
@@ -238,7 +329,7 @@ class PileClassifierApp:
             return predicted_class, confidence
             
         except Exception as e:
-            self.log_message(f"分類エラー: {str(e)}")
+            self.log_message(f"❌ 分類エラー: {str(e)}")
             return None, 0.0
     
     def get_new_filename(self, original_path, pile_type):
@@ -355,19 +446,26 @@ class PileClassifierApp:
         thread.start()
     
     def _process_images(self, folder_path):
-        """画像処理メインロジック"""
+        """画像処理メインロジック（日本語パス完全対応）"""
         try:
             self.status_var.set("処理開始...")
             
-            # 対象画像ファイル収集
+            # 対象画像ファイル収集（日本語パス対応）
             image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
             image_files = []
             
+            # Path.glob使用で日本語パス対応
+            folder_path_obj = Path(folder_path)
             for ext in image_extensions:
+                # 小文字
                 pattern = f"**/*{ext}"
-                image_files.extend(Path(folder_path).glob(pattern))
-                pattern = f"**/*{ext.upper()}"
-                image_files.extend(Path(folder_path).glob(pattern))
+                image_files.extend(folder_path_obj.glob(pattern))
+                # 大文字
+                pattern = f"**/*{ext.upper()}"  
+                image_files.extend(folder_path_obj.glob(pattern))
+            
+            # 重複除去
+            image_files = list(set(image_files))
             
             if not image_files:
                 self.log_message("処理対象の画像ファイルが見つかりません")
@@ -376,6 +474,11 @@ class PileClassifierApp:
             
             self.stats['total_files'] = len(image_files)
             self.log_message(f"対象ファイル数: {self.stats['total_files']}")
+            
+            # 日本語パスの検出とログ出力
+            japanese_paths = [f for f in image_files if not f.name.isascii()]
+            if japanese_paths:
+                self.log_message(f"✅ 日本語パス検出: {len(japanese_paths)}件（PIL対応で処理）")
             
             # バックアップ作成
             if self.backup_var.get():

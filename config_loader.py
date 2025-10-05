@@ -38,12 +38,12 @@ class ConfigLoader:
             "model_settings": {
                 "model_path": "models/all_pile_classifier.h5",
                 "model_info_path": "models/all_pile_model_info.json",
-                "image_size": [224, 224],
+                "image_size": [320, 320],
                 "batch_size": 32,
                 "learning_rate": 0.001,
                 "epochs": 50,
                 "use_core_only": False,
-                "input_shape": [224, 224, 3],
+                "input_shape": [320, 320, 3],
                 "num_classes": 12
             },
             "pile_codes": {
@@ -93,7 +93,7 @@ class ConfigLoader:
     @property
     def input_shape(self):
         """入力形状取得"""
-        return tuple(self.config.get("model_settings", {}).get("input_shape", [224, 224, 3]))
+        return tuple(self.config.get("model_settings", {}).get("input_shape", [320, 320, 3]))
     
     @property
     def code_mapping(self):
@@ -166,7 +166,7 @@ class ConfigLoader:
         if training_size:
             return tuple(training_size)
         
-        model_size = self.config.get("model_settings", {}).get("image_size", [224, 224])
+        model_size = self.config.get("model_settings", {}).get("image_size", [320, 320])
         return tuple(model_size)
     
     @property
@@ -260,8 +260,8 @@ class ConfigLoader:
             errors.append(f"必須クラスが不足: {list(missing_classes)}")
         
         # バッチサイズチェック
-        if self.batch_size < 1 or self.batch_size > 512:
-            errors.append(f"バッチサイズが不正です: {self.batch_size} (有効範囲: 1-512)")
+        if self.batch_size < 1 or self.batch_size > 128:
+            errors.append(f"バッチサイズが不正です: {self.batch_size} (有効範囲: 1-128)")
         
         # 画像サイズチェック
         image_size = self.image_size
