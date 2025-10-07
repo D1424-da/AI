@@ -35,14 +35,14 @@ class SimplePileClassifier:
             'plate',          # プレート
             'byou',           # 金属鋲
             'concrete',       # コンクリート杭
-            'traverse',       # 多角点
+            'traverse',       # 引照点
             'kokudo',         # 国土基準点
             'gaiku_sankaku',  # 街区三角点
             'gaiku_setsu',    # 街区節点
             'gaiku_takaku',   # 街区多角点
             'gaiku_hojo',     # 街区補助点
-            'traverse_in',    # 内部多角点
-            'kagoshima_in'    # 鹿児島内部点
+            'traverse_in',    # 引照点・他
+            'kagoshima_in'    #鹿児島登記引照点
         ]
         
         self.model = None
