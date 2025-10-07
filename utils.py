@@ -260,7 +260,7 @@ def validate_model_path(model_path):
 
 def get_model_info(model_path):
     """モデル情報取得"""
-    info_path = Path(model_path).parent / "model_info.json"
+    info_path = Path(model_path).parent / "all_pile_model_info.json"
     if info_path.exists():
         try:
             with open(info_path, 'r', encoding='utf-8') as f:

@@ -5,10 +5,10 @@ __pycache__/
 *.py[cod]
 *.pkl
 *.csv
-*.png
 *.log
 .vscode/
 .idea/
 .DS_Store
 models/
 data/
+README main.md

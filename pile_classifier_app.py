@@ -54,15 +54,15 @@ class PileClassifierApp:
         self.load_model()
     
     def _load_model_info(self):
-        """model_info.jsonからクラス情報を読み込み"""
+        """all_pile_model_info.jsonからクラス情報を読み込み"""
         try:
-            model_info_path = Path("models/model_info.json")
+            model_info_path = Path("models/all_pile_model_info.json")
             if model_info_path.exists():
                 with open(model_info_path, 'r', encoding='utf-8') as f:
                     model_info = json.load(f)
                     self.class_names = model_info.get('label_encoder_classes', [])
                     self.model_image_size = tuple(model_info.get('image_size', [224, 224]))
-                    print(f"✅ model_info.jsonから読み込み: {len(self.class_names)}クラス")
+                    print(f"✅ all_pile_model_info.jsonから読み込み: {len(self.class_names)}クラス")
             else:
                 # フォールバック: 訓練スクリプトと一致するクラス定義
                 self.class_names = [
@@ -71,7 +71,7 @@ class PileClassifierApp:
                     'gaiku_takaku', 'gaiku_hojo', 'traverse_in', 'kagoshima_in'
                 ]
                 self.model_image_size = (224, 224)
-                print("⚠️ model_info.json未発見、フォールバック定義を使用")
+                print("⚠️ all_pile_model_info.json未発見、フォールバック定義を使用")
             
             # 杭種コードマッピング（訓練時のクラス名と完全一致）
             self.pile_codes = {
@@ -95,7 +95,7 @@ class PileClassifierApp:
                 print(f"⚠️ コード未定義のクラス: {missing_codes}")
             
         except Exception as e:
-            print(f"❌ model_info.json読み込みエラー: {str(e)}")
+            print(f"❌ all_pile_model_info.json読み込みエラー: {str(e)}")
             # 緊急フォールバック
             self.class_names = [
                 'plastic', 'plate', 'byou', 'concrete',

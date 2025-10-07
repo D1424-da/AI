@@ -412,7 +412,7 @@ class MemoryOptimizedPileClassifierTrainer:
             print("✅ クラス順序一致確認")
         
         # メインの model_info.json を保存
-        info_path = Path(self.model_save_path).parent / "model_info.json"
+        info_path = Path(self.model_save_path).parent / "all_pile_model_info.json"
         os.makedirs(Path(self.model_save_path).parent, exist_ok=True)
         
         with open(info_path, 'w', encoding='utf-8') as f:
