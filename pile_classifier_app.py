@@ -250,10 +250,7 @@ class PileClassifierApp:
     
     def preprocess_image(self, image_path):
         """画像前処理（日本語パス対応）"""
-        try:
-            # 日本語パス対応: PIL経由で画像読み込み
-            from PIL import Image
-            
+        try:            
             try:
                 # PILで日本語パス対応読み込み
                 pil_image = Image.open(str(image_path))
